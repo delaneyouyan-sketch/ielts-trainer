@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="creative-medium" content="interactive-prototype">
+<title>雅思逆袭 · 英语自学训练站</title>
+<link rel="stylesheet" href="app/styles.css">
+<link rel="preconnect" href="https://miaoda.feishu.cn">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;800&family=Noto+Sans+SC:wght@400;500;700&family=Spectral:ital,wght@0,500;0,600;1,500&display=swap">
+<script src="https://sf3-scmcdn-cn.feishucdn.com/obj/feishu-static/miaoda/coding-unpkg-sdk/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://sf3-scmcdn-cn.feishucdn.com/obj/feishu-static/miaoda/coding-unpkg-sdk/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://sf3-scmcdn-cn.feishucdn.com/obj/feishu-static/miaoda/coding-unpkg-sdk/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script type="text/babel" src="app/data.jsx"></script>
+<script type="text/babel" src="app/app.jsx"></script>
+<script type="text/babel" src="app/quiz.jsx"></script>
+<script type="text/babel" src="app/booth.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const NAVS = [
+  { key: "home", label: "首页" },
+  { key: "learn", label: "课程" },
+  { key: "quiz", label: "练习" },
+  { key: "booth", label: "口语舱" },
+  { key: "journal", label: "错题本" }
+];
+
+function JournalWrap(props) {
+  const [tab, setTab] = useState(props.initialTab || "mistakes");
+  return <Journal {...props} tab={tab} setTab={setTab} />;
+}
+
+function App() {
+  const [store, update] = useStore();
+  const [view, setView] = useState("home");
+  const [chapterId, setChapterId] = useState("ch1");
+  const [journalTab, setJournalTab] = useState("mistakes");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, toastNode] = useToast();
+
+  const go = (v, arg) => {
+    setView(v);
+    setMenuOpen(false);
+    if (v === "learn" && arg) setChapterId(arg);
+    if (v === "journal") { setJournalTab(arg || "mistakes"); }
+    window.scrollTo({ top: 0 });
+  };
+
+  /* 完成小节 → 当日打卡 + 提示 */
+  const prevDoneCount = useRef(Object.values(store.doneLessons || {}).filter(Boolean).length);
+  useEffect(() => {
+    const n = Object.values(store.doneLessons || {}).filter(Boolean).length;
+    if (n > prevDoneCount.current) {
+      const today = new Date().toISOString().slice(0, 10);
+      update(s => (s.checkins || []).includes(today) ? s : { ...s, checkins: [...(s.checkins || []), today] });
+      toast("已掌握一节，今日打卡 +1");
+    }
+    prevDoneCount.current = n;
+  }, [store.doneLessons]);
+
+  const navKey = view === "mistakeQuiz" ? "journal" : view;
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-mark">E</span>
+          <span className="brand-name">雅思逆袭一本通</span>
+          <span className="brand-en">English Trainer</span>
+        </div>
+        <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="菜单">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <nav className={"nav" + (menuOpen ? " open" : "")}>
+          {NAVS.map(n => (
+            <button key={n.key} className={navKey === n.key ? "active" : ""} onClick={() => go(n.key)}>{n.label}</button>
+          ))}
+        </nav>
+        <div className="streak-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 4 5 9a5 5 0 0 1-10 0c0-1.8.7-3 1.5-4C9 9 10 9 10 9s.2-4 2-7z"/></svg>
+          已打卡 {(store.checkins || []).length} 天
+        </div>
+      </header>
+
+      <main>
+        {view === "home" && <Dashboard store={store} go={go} />}
+        {view === "learn" && <Learn chapterId={chapterId} store={store} update={update} go={go} />}
+        {view === "quiz" && <QuizView store={store} update={update} go={go} onlyMistakes={false} />}
+        {view === "mistakeQuiz" && <QuizView store={store} update={update} go={go} onlyMistakes={true} onExitMistakes={() => go("journal", "mistakes")} />}
+        {view === "booth" && <Booth go={go} />}
+        {view === "journal" && <JournalWrap store={store} update={update} go={go} initialTab={journalTab} />}
+      </main>
+      {toastNode}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
