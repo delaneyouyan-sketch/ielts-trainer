@@ -44,6 +44,13 @@ npm start          # 生产运行：node dist/server/main.js，监听 3000
 4. 环境变量（Environment）：见下方「环境变量」（Render 会自动注入 `PORT`，与代码默认一致即可，或把 `SERVER_PORT` 设为空让其读 `PORT`）。
 5. 部署完成后，打开 Render 分配的 https 网址即可使用。
 
+## 部署后配置（必做）
+
+拿到 Render 网址（形如 `https://xxx.onrender.com`）后，到 Supabase 控制台补两处：
+
+1. **登录回调**：Authentication → URL Configuration → 把 `Site URL` 和 `Redirect URLs` 都填上你的 Render 网址（`https://xxx.onrender.com/**` 用 `**` 通配所有子路径），否则 GitHub 登录和邮箱注册跳转会失败。
+2. **（可选）关闭邮箱验证**：Authentication → Sign In / Providers → Email → 关闭 `Confirm email`，注册后即可直接登录，不用收邮件点链接。
+
 ## 环境变量
 
 | 变量 | 说明 | 获取位置 |
