@@ -18,7 +18,8 @@ async function bootstrap() {
 
   const logger = new Logger('Bootstrap');
   const host = process.env.SERVER_HOST || '0.0.0.0';
-  const port = Number(process.env.SERVER_PORT || '3000');
+  // 优先使用平台注入的 PORT（如 Render），其次 SERVER_PORT，最后默认 3000
+  const port = Number(process.env.PORT || process.env.SERVER_PORT || '3000');
 
   // 注册视图引擎, 渲染 client 目录下的 html 文件
   app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
