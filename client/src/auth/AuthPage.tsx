@@ -61,6 +61,15 @@ export default function AuthPage() {
     }
   };
 
+  const githubLogin = async (): Promise<void> => {
+    setError('');
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: { redirectTo: window.location.origin },
+    });
+    if (err) setError(getAuthMessage(err));
+  };
+
   return (
     <div
       style={{
@@ -166,6 +175,40 @@ export default function AuthPage() {
           }}
         >
           {loading ? '请稍候…' : mode === 'login' ? '登 录' : '注册并登录'}
+        </button>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            margin: '20px 0 14px',
+            color: '#b5aea2',
+            fontSize: 12,
+          }}
+        >
+          <span style={{ flex: 1, height: 1, background: '#ece6db' }} />
+          或
+          <span style={{ flex: 1, height: 1, background: '#ece6db' }} />
+        </div>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => void githubLogin()}
+          style={{
+            width: '100%',
+            padding: '12px 0',
+            borderRadius: 8,
+            border: '1px solid #e0d9cb',
+            background: '#fff',
+            color: '#2d2a26',
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          使用 GitHub 账号登录
         </button>
       </div>
     </div>
